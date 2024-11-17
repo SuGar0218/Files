@@ -135,12 +135,6 @@ PSGetPropertyKeyFromName
 ShellExecuteEx
 CoTaskMemFree
 QueryDosDevice
-FindFirstFileEx
-FindNextFile
-CreateFile
-GetFileSizeEx
-WIN32_FIND_DATAW
-FILE_ACCESS_RIGHTS
 SHAddToRecentDocs
 SHARD
 BHID_EnumItems
