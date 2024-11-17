@@ -1,10 +1,7 @@
-// Copyright (c) 2024 Files Community
-// Licensed under the MIT License. See the LICENSE.
-
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.IO;
-using Windows.Win32;
-using Windows.Win32.Storage.FileSystem;
+using Vanara.PInvoke;
+using static Vanara.PInvoke.Kernel32;
 
 namespace Files.App.Utils.Storage.Operations
 {
@@ -25,18 +22,7 @@ namespace Files.App.Utils.Storage.Operations
 
 		public async Task ComputeSizeAsync(CancellationToken cancellationToken = default)
 		{
-			await Parallel.ForEachAsync(
-				_paths,
-				cancellationToken,
-				async (path, token) => await Task.Factory.StartNew(() =>
-					{
-						ComputeSizeRecursively(path, token);
-					},
-					token,
-					TaskCreationOptions.LongRunning,
-					TaskScheduler.Default));
-
-			unsafe void ComputeSizeRecursively(string path, CancellationToken token)
+			await Parallel.ForEachAsync(_paths, cancellationToken, async (path, token) => await Task.Factory.StartNew(() =>
 			{
 				var queue = new Queue<string>();
 				if (!Win32Helper.HasFileAttribute(path, FileAttributes.Directory))
@@ -49,70 +35,66 @@ namespace Files.App.Utils.Storage.Operations
 
 					while (queue.TryDequeue(out var directory))
 					{
-						WIN32_FIND_DATAW findData = default;
+						using var hFile = FindFirstFileEx(
+							directory + "\\*.*",
+							FINDEX_INFO_LEVELS.FindExInfoBasic,
+							out WIN32_FIND_DATA findData,
+							FINDEX_SEARCH_OPS.FindExSearchNameMatch,
+							IntPtr.Zero,
+							FIND_FIRST.FIND_FIRST_EX_LARGE_FETCH);
 
-						fixed (char* pszFilePath = directory + "\\*.*")
+						if (!hFile.IsInvalid)
 						{
-							var hFile = PInvoke.FindFirstFileEx(
-								pszFilePath,
-								FINDEX_INFO_LEVELS.FindExInfoBasic,
-								&findData,
-								FINDEX_SEARCH_OPS.FindExSearchNameMatch,
-								null,
-								FIND_FIRST_EX_FLAGS.FIND_FIRST_EX_LARGE_FETCH);
-
-							if (!hFile.IsNull)
+							do
 							{
-								do
+								if ((findData.dwFileAttributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+									// Skip symbolic links and junctions
+									continue;
+
+								var itemPath = Path.Combine(directory, findData.cFileName);
+
+								if ((findData.dwFileAttributes & FileAttributes.Directory) != FileAttributes.Directory)
 								{
-									FILE_FLAGS_AND_ATTRIBUTES attributes = (FILE_FLAGS_AND_ATTRIBUTES)findData.dwFileAttributes;
-
-									if (attributes.HasFlag(FILE_FLAGS_AND_ATTRIBUTES.FILE_ATTRIBUTE_REPARSE_POINT))
-										// Skip symbolic links and junctions
-										continue;
-
-									var itemPath = Path.Combine(directory, findData.cFileName.ToString());
-
-									if (attributes.HasFlag(FILE_FLAGS_AND_ATTRIBUTES.FILE_ATTRIBUTE_DIRECTORY))
-									{
-										ComputeFileSize(itemPath);
-									}
-									else if (findData.cFileName.ToString() is string fileName &&
-										fileName.Equals(".", StringComparison.OrdinalIgnoreCase) &&
-										fileName.Equals("..", StringComparison.OrdinalIgnoreCase))
-									{
-										queue.Enqueue(itemPath);
-									}
-
-									if (token.IsCancellationRequested)
-										break;
+									ComputeFileSize(itemPath);
 								}
-								while (PInvoke.FindNextFile(hFile, &findData));
-							}
+								else if (findData.cFileName != "." && findData.cFileName != "..")
+								{
+									queue.Enqueue(itemPath);
+								}
 
-							PInvoke.CloseHandle(hFile);
+								if (token.IsCancellationRequested)
+									break;
+							}
+							while (FindNextFile(hFile, out findData));
 						}
 					}
 				}
-			}
+			}, token, TaskCreationOptions.LongRunning, TaskScheduler.Default));
 		}
 
 		private long ComputeFileSize(string path)
 		{
 			if (_computedFiles.TryGetValue(path, out var size))
+			{
 				return size;
+			}
 
-			using var hFile = PInvoke.CreateFile(
+			using var hFile = CreateFile(
 				path,
-				(uint)FILE_ACCESS_RIGHTS.FILE_READ_ATTRIBUTES,
-				FILE_SHARE_MODE.FILE_SHARE_READ,
+				Kernel32.FileAccess.FILE_READ_ATTRIBUTES,
+				FileShare.Read,
 				null,
-				FILE_CREATION_DISPOSITION.OPEN_EXISTING,
+				FileMode.Open,
 				0,
 				null);
 
-			if (!hFile.IsInvalid && PInvoke.GetFileSizeEx(hFile, out size) && _computedFiles.TryAdd(path, size))
-				Interlocked.Add(ref _size, size);
+			if (!hFile.IsInvalid)
+			{
+				if (GetFileSizeEx(hFile, out size) && _computedFiles.TryAdd(path, size))
+				{
+					Interlocked.Add(ref _size, size);
+				}
+			}
 
 			return size;
 		}
@@ -120,7 +102,9 @@ namespace Files.App.Utils.Storage.Operations
 		public void ForceComputeFileSize(string path)
 		{
 			if (!Win32Helper.HasFileAttribute(path, FileAttributes.Directory))
+			{
 				ComputeFileSize(path);
+			}
 		}
 
 		public bool TryGetComputedFileSize(string path, out long size)

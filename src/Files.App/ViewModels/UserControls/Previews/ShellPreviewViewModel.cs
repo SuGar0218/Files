@@ -15,7 +15,6 @@ using Windows.Win32.Graphics.Direct3D11;
 using Windows.Win32.Graphics.DirectComposition;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.Graphics.Dxgi;
-using Windows.Win32.UI.WindowsAndMessaging;
 using WinRT;
 using static Vanara.PInvoke.ShlwApi;
 using static Vanara.PInvoke.User32;
@@ -246,11 +245,14 @@ namespace Files.App.ViewModels.Previews
 					(uint)Marshal.SizeOf(dwAttrib));
 
 				if (isOfficePreview)
-					PInvoke.SetWindowLongPtr(new((nint)hwnd), WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, 0);
+					Win32Helper.SetWindowLong(hwnd, WindowLongFlags.GWL_EXSTYLE, 0);
 			}
 			else
 			{
-				PInvoke.SetWindowLongPtr(new((nint)hwnd), WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (nint)(WINDOW_EX_STYLE.WS_EX_LAYERED | WINDOW_EX_STYLE.WS_EX_COMPOSITED));
+				Win32Helper.SetWindowLong(
+					hwnd,
+					WindowLongFlags.GWL_EXSTYLE,
+					(nint)(WindowStylesEx.WS_EX_LAYERED | WindowStylesEx.WS_EX_COMPOSITED));
 
 				var dwAttrib = Convert.ToUInt32(true);
 

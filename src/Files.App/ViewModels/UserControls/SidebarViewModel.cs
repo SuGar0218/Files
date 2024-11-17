@@ -3,6 +3,7 @@
 
 using Files.App.Helpers.ContextFlyouts;
 using Files.App.UserControls.Sidebar;
+using Files.App.ViewModels.Dialogs;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,11 +12,13 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System.Collections.Specialized;
 using System.IO;
 using System.Windows.Input;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.ApplicationModel.DataTransfer.DragDrop;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.Core;
+using Files.Core.Storage;
+using Files.Core.Storage.Extensions;
 
 namespace Files.App.ViewModels.UserControls
 {
@@ -258,6 +261,7 @@ namespace Files.App.ViewModels.UserControls
 			OpenInNewWindowCommand = new AsyncRelayCommand(OpenInNewWindowAsync);
 			OpenInNewPaneCommand = new AsyncRelayCommand(OpenInNewPaneAsync);
 			EjectDeviceCommand = new RelayCommand(EjectDevice);
+			FormatDriveCommand = new RelayCommand(FormatDrive);
 			OpenPropertiesCommand = new RelayCommand<CommandBarFlyout>(OpenProperties);
 			ReorderItemsCommand = new AsyncRelayCommand(ReorderItemsAsync);
 		}
@@ -838,6 +842,8 @@ namespace Files.App.ViewModels.UserControls
 
 		private ICommand EjectDeviceCommand { get; }
 
+		private ICommand FormatDriveCommand { get; }
+
 		private ICommand OpenPropertiesCommand { get; }
 
 		private ICommand ReorderItemsCommand { get; }
@@ -952,6 +958,11 @@ namespace Files.App.ViewModels.UserControls
 			DriveHelpers.EjectDeviceAsync(rightClickedItem.Path);
 		}
 
+		private void FormatDrive()
+		{
+			Win32Helper.OpenFormatDriveDialog(rightClickedItem.Path);
+		}
+
 		private List<ContextMenuFlyoutItemViewModel> GetLocationItemMenuItems(INavigationControlItem item, CommandBarFlyout menu)
 		{
 			var options = item.MenuOptions;
@@ -1036,6 +1047,13 @@ namespace Files.App.ViewModels.UserControls
 				},
 				new ContextMenuFlyoutItemViewModel()
 				{
+					Text = "FormatDriveText".GetLocalizedResource(),
+					Command = FormatDriveCommand,
+					CommandParameter = item,
+					ShowItem = options.ShowFormatDrive
+				},
+				new ContextMenuFlyoutItemViewModel()
+				{
 					Text = "Properties".GetLocalizedResource(),
 					ThemedIconModel = new ThemedIconModel()
 					{
@@ -1048,13 +1066,9 @@ namespace Files.App.ViewModels.UserControls
 				new ContextMenuFlyoutItemViewModel()
 				{
 					ItemType = ContextMenuFlyoutItemType.Separator,
-					ShowItem = Commands.OpenTerminalFromSidebar.IsExecutable ||
-						Commands.OpenStorageSenseFromSidebar.IsExecutable ||
-						Commands.FormatDriveFromSidebar.IsExecutable
+					ShowItem = Commands.OpenTerminalFromSidebar.IsExecutable
 				},
 				new ContextMenuFlyoutItemViewModelBuilder(Commands.OpenTerminalFromSidebar).Build(),
-				new ContextMenuFlyoutItemViewModelBuilder(Commands.OpenStorageSenseFromSidebar).Build(),
-				new ContextMenuFlyoutItemViewModelBuilder(Commands.FormatDriveFromSidebar).Build(),
 				new ContextMenuFlyoutItemViewModel()
 				{
 					ItemType = ContextMenuFlyoutItemType.Separator,

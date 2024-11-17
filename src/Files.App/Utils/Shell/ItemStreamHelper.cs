@@ -1,8 +1,6 @@
-﻿// Copyright (c) 2024 Files Community
-// Licensed under the MIT License. See the LICENSE.
-
+﻿using System;
 using System.Runtime.InteropServices;
-using Windows.Win32.System.Com;
+using Vanara.PInvoke;
 
 namespace Files.App.Utils.Shell
 {
@@ -22,15 +20,12 @@ namespace Files.App.Utils.Shell
 
 		public static IntPtr IStreamFromPath(string path)
 		{
-			var hr = Win32PInvoke.SHCreateStreamOnFileEx(
-				path,
+			IntPtr pstm;
+			var hr = Win32PInvoke.SHCreateStreamOnFileEx(path,
 				STGM.STGM_READ | STGM.STGM_FAILIFTHERE | STGM.STGM_SHARE_DENY_NONE,
-				0, 0,
-				IntPtr.Zero, out var pstm);
-
+				0, 0, IntPtr.Zero, out pstm);
 			if ((int)hr < 0)
 				return IntPtr.Zero;
-
 			return pstm;
 		}
 

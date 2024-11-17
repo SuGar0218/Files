@@ -35,14 +35,14 @@ namespace Files.App.Helpers
 			// If the number of regions is 0 or 1, AppWindow will automatically reset to the default region next time, but if it is >=2, it will not and need to be manually cleared
 			source.ClearRegionRects(NonClientRegionKind.Passthrough);
 			var titleBarHeight = setTitleBarDragRegion(source, size, scaleFactor, GetScaledRect);
-			if (titleBarHeight >= 0)
-			{
-				// region under the buttons
-				const int borderThickness = 5;
-				source.SetRegionRects(NonClientRegionKind.LeftBorder, [GetScaledRect(uiElement, new(0, 0, borderThickness, titleBarHeight))]);
-				source.SetRegionRects(NonClientRegionKind.RightBorder, [GetScaledRect(uiElement, new(size.Width, 0, borderThickness, titleBarHeight))]);
-				source.SetRegionRects(NonClientRegionKind.Caption, [GetScaledRect(uiElement, new(0, 0, size.Width, titleBarHeight))]);
-			}
+			//if (titleBarHeight >= 0)
+			//{
+			//	// region under the buttons
+			//	const int borderThickness = 5;
+			//	source.SetRegionRects(NonClientRegionKind.LeftBorder, [GetScaledRect(uiElement, new(0, 0, borderThickness, titleBarHeight))]);
+			//	source.SetRegionRects(NonClientRegionKind.RightBorder, [GetScaledRect(uiElement, new(size.Width, 0, borderThickness, titleBarHeight))]);
+			//	source.SetRegionRects(NonClientRegionKind.Caption, [GetScaledRect(uiElement, new(0, 0, size.Width, titleBarHeight))]);
+			//}
 		}
 
 		private static RectInt32 GetScaledRect(this UIElement uiElement, RectInt32? r = null)

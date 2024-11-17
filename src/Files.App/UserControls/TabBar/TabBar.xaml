@@ -97,11 +97,13 @@
 			<!--  Header  -->
 			<TabView.TabStripHeader>
 				<Button
+					x:Name="TabStripHeaderButton"
 					Width="30"
 					Height="30"
 					Margin="4,0,-2,0"
 					Padding="0"
 					VerticalAlignment="Center"
+					x:FieldModifier="public"
 					AutomationProperties.Name="{helpers:ResourceString Name=TabActions}"
 					Background="Transparent"
 					BorderThickness="0"
@@ -240,6 +242,7 @@
 						Padding="8"
 						HorizontalAlignment="Left"
 						VerticalAlignment="Center"
+						x:FieldModifier="public"
 						AllowDrop="True"
 						AutomationProperties.Name="{x:Bind Commands.NewTab.AutomationName}"
 						Background="Transparent"
@@ -255,7 +258,7 @@
 
 					<!--  Left Side Drag Area  -->
 					<Rectangle
-						x:Name="DragAreaRectangle"
+						x:Name="TabStripFooterSpaceRectangle"
 						Grid.Column="1"
 						Grid.ColumnSpan="2"
 						HorizontalAlignment="Stretch"

@@ -48,8 +48,10 @@ namespace Files.App.UserControls.TabBar
 		public bool AllowTabsDrag
 			=> WindowContext.CanDragAndDrop;
 
-		public Rectangle DragArea
-			=> DragAreaRectangle;
+		public Rectangle TabStripFooterSpace
+			=> TabStripFooterSpaceRectangle;
+
+		public TabView TabView { get => HorizontalTabView; }
 
 		// Events
 

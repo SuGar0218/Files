@@ -124,9 +124,30 @@ namespace Files.App.Views
 			}
 		}
 
+		// If TabStripFooterSizeChanged,
+		// there is no need for TabControl.SizeChanged to SetTitleBarDragRegion.
+		// If TabStripFooter reaches its MinWidth,
+		// TabStripFooterSizeChanged will not happen,
+		// now need for TabControl.SizeChanged to SetTitleBarDragRegion.
+		private bool _isTabStripFooterSizeChanged = false;
+
 		private void HorizontalMultitaskingControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			TabControl.DragArea.SizeChanged += (_, _) => MainWindow.Instance.RaiseSetTitleBarDragRegion(SetTitleBarDragRegion);
+			//TabControl.TabStripFooterSpace.SizeChanged += (_, _) => MainWindow.Instance.RaiseSetTitleBarDragRegion(SetTitleBarDragRegion);
+			MainWindow.Instance.SetTitleBar(TabControl);
+			TabControl.TabStripFooterSpace.SizeChanged += (_, _) =>
+			{
+				_isTabStripFooterSizeChanged = true;
+				SetTitleBarDragRegion();
+			};
+			TabControl.SizeChanged += (_, _) =>
+			{
+				if (!_isTabStripFooterSizeChanged)
+				{
+					SetTitleBarDragRegion();
+				}
+				_isTabStripFooterSizeChanged = false;
+			};
 			if (ViewModel.MultitaskingControl is not TabBar)
 			{
 				ViewModel.MultitaskingControl = TabControl;
@@ -135,12 +156,32 @@ namespace Files.App.Views
 			}
 		}
 
+		private void SetTitleBarDragRegion()
+		{
+			MainWindow.Instance.TitleBarPassthrough(
+				[TabControl.TabStripHeaderButton, TabControl.TabBarAddNewTabButton],
+				TabControl.TabView
+			);
+		}
+
 		private int SetTitleBarDragRegion(InputNonClientPointerSource source, SizeInt32 size, double scaleFactor, Func<UIElement, RectInt32?, RectInt32> getScaledRect)
 		{
 			var height = (int)TabControl.ActualHeight;
-			source.SetRegionRects(NonClientRegionKind.Passthrough, [getScaledRect(this, new RectInt32(0, 0, (int)(TabControl.ActualWidth + TabControl.Margin.Left - TabControl.DragArea.ActualWidth), height))]);
+
+			// 原来的：
+			//source.SetRegionRects(NonClientRegionKind.Passthrough, [getScaledRect(this, new RectInt32(0, 0, (int)(TabControl.ActualWidth + TabControl.Margin.Left - TabControl.TabStripFooterSpace.ActualWidth), height))]);
+
+			// 改的：
+			//MainWindow.Instance.ResetPassthrough();
+			MainWindow.Instance.TitleBarPassthrough(
+				[TabControl.TabStripHeaderButton, TabControl.TabBarAddNewTabButton],
+				TabControl.TabView
+			);
+
 			return height;
 		}
+
+
 
 		public async void TabItemContent_ContentChanged(object? sender, TabBarItemParameter e)
 		{
@@ -279,7 +320,7 @@ namespace Files.App.Views
 
 		private void Page_Loaded(object sender, RoutedEventArgs e)
 		{
-			MainWindow.Instance.AppWindow.Changed += (_, _) => MainWindow.Instance.RaiseSetTitleBarDragRegion(SetTitleBarDragRegion);
+			//MainWindow.Instance.AppWindow.Changed += (_, _) => MainWindow.Instance.RaiseSetTitleBarDragRegion(SetTitleBarDragRegion);
 
 			// Defers the status bar loading until after the page has loaded to improve startup perf
 			FindName(nameof(StatusBar));

@@ -40,6 +40,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 
 		// Commands
 
+		private ICommand FormatDriveCommand { get; } = null!;
 		private ICommand EjectDeviceCommand { get; } = null!;
 		private ICommand OpenInNewPaneCommand { get; } = null!;
 		private ICommand MapNetworkDriveCommand { get; } = null!;
@@ -59,6 +60,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 			OpenInNewWindowCommand = new AsyncRelayCommand<WidgetCardItem>(ExecuteOpenInNewWindowCommand);
 			PinToSidebarCommand = new AsyncRelayCommand<WidgetCardItem>(ExecutePinToSidebarCommand);
 			UnpinFromSidebarCommand = new AsyncRelayCommand<WidgetCardItem>(ExecuteUnpinFromSidebarCommand);
+			FormatDriveCommand = new RelayCommand<WidgetDriveCardItem>(ExecuteFormatDriveCommand);
 			EjectDeviceCommand = new RelayCommand<WidgetDriveCardItem>(ExecuteEjectDeviceCommand);
 			OpenInNewPaneCommand = new AsyncRelayCommand<WidgetDriveCardItem>(ExecuteOpenInNewPaneCommand);
 			OpenPropertiesCommand = new RelayCommand<WidgetDriveCardItem>(ExecuteOpenPropertiesCommand);
@@ -107,7 +109,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 			{
 				new()
 				{
-					Text = Strings.OpenInNewTab.GetLocalizedResource(),
+					Text = "OpenInNewTab".GetLocalizedResource(),
 					ThemedIconModel = new ThemedIconModel() { ThemedIconStyle = "App.ThemedIcons.OpenInTab" },
 					Command = OpenInNewTabCommand,
 					CommandParameter = item,
@@ -115,7 +117,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				},
 				new()
 				{
-					Text = Strings.OpenInNewWindow.GetLocalizedResource(),
+					Text = "OpenInNewWindow".GetLocalizedResource(),
 					ThemedIconModel = new ThemedIconModel() { ThemedIconStyle = "App.ThemedIcons.OpenInWindow" },
 					Command = OpenInNewWindowCommand,
 					CommandParameter = item,
@@ -123,14 +125,14 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				},
 				new()
 				{
-					Text = Strings.OpenInNewPane.GetLocalizedResource(),
+					Text = "OpenInNewPane".GetLocalizedResource(),
 					Command = OpenInNewPaneCommand,
 					CommandParameter = item,
 					ShowItem = UserSettingsService.GeneralSettingsService.ShowOpenInNewPane
 				},
 				new()
 				{
-					Text = Strings.PinFolderToSidebar.GetLocalizedResource(),
+					Text = "PinFolderToSidebar".GetLocalizedResource(),
 					ThemedIconModel = new ThemedIconModel() { ThemedIconStyle = "App.ThemedIcons.FavoritePin" },
 					Command = PinToSidebarCommand,
 					CommandParameter = item,
@@ -138,7 +140,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				},
 				new()
 				{
-					Text = Strings.UnpinFolderFromSidebar.GetLocalizedResource(),
+					Text = "UnpinFolderFromSidebar".GetLocalizedResource(),
 					ThemedIconModel = new ThemedIconModel() { ThemedIconStyle = "App.ThemedIcons.FavoritePinRemove" },
 					Command = UnpinFromSidebarCommand,
 					CommandParameter = item,
@@ -146,28 +148,34 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				},
 				new()
 				{
-					Text = Strings.Eject.GetLocalizedResource(),
+					Text = "Eject".GetLocalizedResource(),
 					Command = EjectDeviceCommand,
 					CommandParameter = item,
 					ShowItem = options?.ShowEjectDevice ?? false
 				},
-				new ContextMenuFlyoutItemViewModelBuilder(CommandManager.FormatDriveFromHome).Build(),
 				new()
 				{
-					Text = Strings.Properties.GetLocalizedResource(),
+					Text = "FormatDriveText".GetLocalizedResource(),
+					Command = FormatDriveCommand,
+					CommandParameter = item,
+					ShowItem = options?.ShowFormatDrive ?? false
+				},
+				new()
+				{
+					Text = "Properties".GetLocalizedResource(),
 					ThemedIconModel = new ThemedIconModel() { ThemedIconStyle = "App.ThemedIcons.Properties" },
 					Command = OpenPropertiesCommand,
 					CommandParameter = item
 				},
 				new()
 				{
-					Text = Strings.TurnOnBitLocker.GetLocalizedResource(),
+					Text = "TurnOnBitLocker".GetLocalizedResource(),
 					Tag = "TurnOnBitLockerPlaceholder",
 					IsEnabled = false
 				},
 				new()
 				{
-					Text = Strings.ManageBitLocker.GetLocalizedResource(),
+					Text = "ManageBitLocker".GetLocalizedResource(),
 					Tag = "ManageBitLockerPlaceholder",
 					IsEnabled = false
 				},
@@ -178,7 +186,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				},
 				new()
 				{
-					Text = Strings.Loading.GetLocalizedResource(),
+					Text = "Loading".GetLocalizedResource(),
 					Glyph = "\xE712",
 					Items = [],
 					ID = "ItemOverflow",
